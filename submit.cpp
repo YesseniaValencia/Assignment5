@@ -113,55 +113,44 @@ int numNeighbors(int i, int j, int size, int *arr) {
 }
 int updateLiveCount(int *a, int n,int *livecount, int iter, int debug_iteration, int livecount_iter) {
 #if DEBUG == 1
-  if(iter % debug_iteration == 0) {
-    int total_lives = countlive(a,n);
-    livecount[livecount_iter] = total_lives;
-    livecount_iter++; 
-    printLiveCount(livecount, 10); 
-  }
+  livecount[livecount_iter] = countlive(a,n);
+  livecount_iter++; 
+  printLiveCount(livecount, 10); 
 #endif
   return livecount_iter;
 }
 void life(int *a, unsigned int n, unsigned int iter, int *livecount) {
+  std::ofstream results; 
+  results.open("results"); 
   int debug_iteration = iter/10;
   int livecount_iter = 0;
   for(int it = 0; it < iter; it++) {
-    std::cout << "\n\nIteration: " << it << "\n\n" << std::endl;
+    
     for(int i = 0; i < n; i++) {
       for(int j = 0; j < n; j++) {
 	int cell_state = a[i*n + j];
 	isOccupied(i,j,cell_state);
 	int neighbors = numNeighbors(i, j, n, a); 
-	bool done = false;
-	while(!done) {
-	  if(cell_state == 1 && neighbors == 2) {
-	    setCellValue(i,j,n,a,1);
-	    break;
-	  }
-	  else if(cell_state == 1 && neighbors == 3) {
-	    setCellValue(i,j,n,a,1);
-	    break;
-	  }
-	  else if(cell_state == 1 && neighbors < 2) {
-	    setCellValue(i,j,n,a,0);
-	    std::cout << "Not enough neighbors.This square is now empty" << std::endl;
-	    break;
-	  }
-	  else if(cell_state == 1 && neighbors > 3) {
-	    setCellValue(i,j,n,a,0);
-	    std::cout << "Overcrowding: square is now empty" << std::endl;
-	    break;
-	  }
-	  else if(cell_state == 0 && neighbors == 3) {
-	    setCellValue(i,j,n,a,1);
-	    std::cout << "Fixed amount of neighbors.This node was brought to life" << std::endl;
-	    break;
-	  }
-	  else 
-	    done = true;
+	if(neighbors == 3) {
+	  setCellValue(i,j,n,a,1);
+	}
+	else if(cell_state == 1 && neighbors == 2) {
+	  setCellValue(i,j,n,a,1);
+	}
+	else if(cell_state == 1 && neighbors < 2) {
+	  setCellValue(i,j,n,a,0);
+	  std::cout << "Not enough neighbors.This square is now empty" << std::endl;
+	}
+	else if(cell_state == 1 && neighbors > 3) {
+	  setCellValue(i,j,n,a,0);
+	  std::cout << "Overcrowding: square is now empty" << std::endl;
 	}
       }
     }
-    livecount_iter = updateLiveCount(a,n,livecount,it, debug_iteration, livecount_iter); 
+    if(it % debug_iteration == 0) 
+      livecount_iter = updateLiveCount(a,n,livecount,it, debug_iteration, livecount_iter); 
+  }
+  for(int i = 0; i < n; i++) {
+    results << livecount[i] << " "; 
   }
 }
