@@ -33,7 +33,7 @@ int main(int argc, char **argv)
 			printf("Malloc failed .. Exiting\n");
 			exit(-1);
 		}
-
+		
 		readlife(a,n, argv[2]);
 	}
 	// Generate random data
