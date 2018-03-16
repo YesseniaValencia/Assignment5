@@ -11,17 +11,9 @@
 #include <time.h>
 #include <iostream>
 #include <fstream>
+#include <cilk/cilk.h>
+#include <cilk/reducer_opadd.h>
 
-int cellValue(int i, int j, int size, int *arr) {
-  int val = arr[i*size+j]; 
-  if(val == 0)
-    return 0;
-  else
-    return 1;
-}
-void setCellValue(int i, int j, int size, int *arr, int value) {
-  arr[i*size + j] = value;
-}
 void isOccupied(int i, int j,int val) {
   std::cout << "(" << i << ", " << j << ")"  << std::endl;
   if(val == 1) 
@@ -29,11 +21,13 @@ void isOccupied(int i, int j,int val) {
   else
     std::cout << "This square is empty." << std::endl;
 }
+/*
 void printArray(int *arr, int size) {
   for(int i = 0; i < size; i++) 
     for(int j = 0; j < size; j++) 
       std::cout << cellValue(i,j,size, arr) << " "; 
 }
+*/
 void printLiveCount(int *livecount, int size) {
   std::cout << "livecount [ ";
   for(int i = 0; i < size; i++) 
@@ -73,6 +67,7 @@ void readlife(int *a, unsigned int n, char *filename) {
     }
   }
 }
+/*
 int numNeighbors(int i, int j, int size, int *arr) {
   int d1x = i-1; 
   if(d1x == -1) 
@@ -97,60 +92,110 @@ int numNeighbors(int i, int j, int size, int *arr) {
   int verCount = v1 + v2;
   int horCount = h1 + h2;
   int diagCount = d1 + d2 + d3 + d4;
-  
-  std::cout << "v1 = (" << d1x << ", " << j << ")" << " = " << v1 << std::endl;
-  std::cout << "v2 = (" << d2x << ", " << j << ")" << " = " << v2 << std::endl;
-  std::cout << "h1 = (" << i << ", " << d1y << ")" << " = " << h1 << std::endl;
-  std::cout << "h2 = (" << i << ", " << d2y << ")" << " = " << h2 << std::endl;  
-  std::cout << "d1 = (" << d1x << ", " << d1y << ")" << " = " << d1 << std::endl;
-  std::cout << "d2 = (" << d1x << ", " << d2y << ")" << " = " << d2 << std::endl;
-  std::cout << "d3 = (" << d2x << ", " << d1y << ")" << " = " << d3 << std::endl;
-  std::cout << "d4 = (" << d2x << ", " << d2y << ")" << " = " << d4 << std::endl;
-  std::cout << verCount << " " << horCount << " " << diagCount << std::endl;
-  
+*/
+
+/*  
+    std::cout << "v1 = (" << d1x << ", " << j << ")" << " = " << v1 << std::endl;
+    std::cout << "v2 = (" << d2x << ", " << j << ")" << " = " << v2 << std::endl;
+    std::cout << "h1 = (" << i << ", " << d1y << ")" << " = " << h1 << std::endl;
+    std::cout << "h2 = (" << i << ", " << d2y << ")" << " = " << h2 << std::endl;  
+    std::cout << "d1 = (" << d1x << ", " << d1y << ")" << " = " << d1 << std::endl;
+    std::cout << "d2 = (" << d1x << ", " << d2y << ")" << " = " << d2 << std::endl;
+    std::cout << "d3 = (" << d2x << ", " << d1y << ")" << " = " << d3 << std::endl;
+    std::cout << "d4 = (" << d2x << ", " << d2y << ")" << " = " << d4 << std::endl;
+    std::cout << verCount << " " << horCount << " " << diagCount << std::endl;
   int count = verCount + horCount + diagCount; 
   return count;
 }
+*/
+/*
 int updateLiveCount(int *a, int n,int *livecount, int iter, int debug_iteration, int livecount_iter) {
-#if DEBUG == 1
-  livecount[livecount_iter] = countlive(a,n);
-  livecount_iter++; 
-  printLiveCount(livecount, 10); 
-#endif
+
   return livecount_iter;
 }
+*/
+void updateLifeReducer(int *a, unsigned int n) {
+  cilk_for(int i = 0; i < n; i++) {
+    for(int j = 0; j < n; j++) {
+      int dx1 = (i - 1 + n) % n * n; 
+      int dx2 = (i + 1 + n) % n * n; 
+      int dy1 = (j - 1 + n) % n; 
+      int dy2 = (j + 1 + n) % n; 
+      int nw = dx1 + dy1; 
+      int n = dx1 + j; 
+      int ne = dx1 + dy2; 
+      int w = i*n + dy1; 
+      int e = i*n + dy2; 
+      int sw = dx2 + dy1; 
+      int s = dx2 + j; 
+      int se = dx2 + dy2; 
+      cilk::reducer_opadd<int> totalNeighbors; 
+      if(a[nw] == 1) totalNeighbors++; 
+      if(a[n] == 1) totalNeighbors++; 
+      if(a[ne] == 1) totalNeighbors++; 
+      if(a[w] == 1) totalNeighbors++; 
+      if(a[e] == 1) totalNeighbors++; 
+      if(a[sw] == 1) totalNeighbors++; 
+      if(a[s] == 1) totalNeighbors++; 
+      if(a[se] == 1) totalNeighbors++; 
+      int neighbors = totalNeighbors.get_value(); 
+      int index = i*n + j; 
+      
+      if(a[index] == 1) {
+	if(neighbors == 2 || neighbors == 3)
+	  a[index] == 1; 
+	else if(neighbors > 3) 
+	  a[index] = 0; 
+	else if(neighbors < 2)
+	  a[index] = 0; 
+      }
+      else
+	if(neighbors == 3)
+	  a[index] = 1; 
+      
+    }
+  }
+}
+/*
+void updateLife(int *a, unsigned int n, unsigned int it) {
+  cilk_for(int i = 0; i < n; i++) {
+    for(int j = 0; j < n; j++) {
+      int cell_state = a[i*n + j];
+      //isOccupied(i,j,cell_state);
+      int neighbors = numNeighbors(i, j, n, a); 
+      if(neighbors == 3) {
+	setCellValue(i,j,n,a,1);
+      }
+      else if(cell_state == 1 && neighbors == 2) {
+	setCellValue(i,j,n,a,1);
+      }
+      else if(cell_state == 1 && neighbors < 2) {
+	setCellValue(i,j,n,a,0);
+	  //std::cout << "Not enough neighbors.This square is now empty" << std::endl;
+      }
+      else if(cell_state == 1 && neighbors > 3) {
+	setCellValue(i,j,n,a,0);
+	//std::cout << "Overcrowding: square is now empty" << std::endl;
+	}
+    }  
+  }
+}
+*/
 void life(int *a, unsigned int n, unsigned int iter, int *livecount) {
   std::ofstream results; 
   results.open("results"); 
-  int debug_iteration = iter/10;
-  int livecount_iter = 0;
+  
   for(int it = 0; it < iter; it++) {
+    updateLifeReducer(a,n); 
     
-    for(int i = 0; i < n; i++) {
-      for(int j = 0; j < n; j++) {
-	int cell_state = a[i*n + j];
-	isOccupied(i,j,cell_state);
-	int neighbors = numNeighbors(i, j, n, a); 
-	if(neighbors == 3) {
-	  setCellValue(i,j,n,a,1);
-	}
-	else if(cell_state == 1 && neighbors == 2) {
-	  setCellValue(i,j,n,a,1);
-	}
-	else if(cell_state == 1 && neighbors < 2) {
-	  setCellValue(i,j,n,a,0);
-	  std::cout << "Not enough neighbors.This square is now empty" << std::endl;
-	}
-	else if(cell_state == 1 && neighbors > 3) {
-	  setCellValue(i,j,n,a,0);
-	  std::cout << "Overcrowding: square is now empty" << std::endl;
-	}
-      }
+#if DEBUG == 1
+    if((it + 1) % (iter/10) == 0) {
+      livecount[it/(iter/10)] = countlive(a,n);
+      //      printLiveCount(livecount, 10); 
     }
-    if(it % debug_iteration == 0) 
-      livecount_iter = updateLiveCount(a,n,livecount,it, debug_iteration, livecount_iter); 
+#endif    
   }
-  for(int i = 0; i < n; i++) {
+  for(int i = 0; i < n; i++) 
     results << livecount[i] << " "; 
-  }
+  
 }
