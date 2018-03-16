@@ -13,7 +13,7 @@
 #include <fstream>
 #include <cilk/cilk.h>
 #include <cilk/reducer_opadd.h>
-
+/*
 void isOccupied(int i, int j,int val) {
   std::cout << "(" << i << ", " << j << ")"  << std::endl;
   if(val == 1) 
@@ -21,6 +21,7 @@ void isOccupied(int i, int j,int val) {
   else
     std::cout << "This square is empty." << std::endl;
 }
+*/
 /*
 void printArray(int *arr, int size) {
   for(int i = 0; i < size; i++) 
@@ -28,12 +29,14 @@ void printArray(int *arr, int size) {
       std::cout << cellValue(i,j,size, arr) << " "; 
 }
 */
+/*
 void printLiveCount(int *livecount, int size) {
   std::cout << "livecount [ ";
   for(int i = 0; i < size; i++) 
     std::cout << livecount[i] << " ";
   std::cout << "]" << std::endl;
 }
+*/
 void genlife(int *a, unsigned int n)
 {
   std::ofstream resultFile;
@@ -117,6 +120,9 @@ int updateLiveCount(int *a, int n,int *livecount, int iter, int debug_iteration,
 void updateLifeReducer(int *a, unsigned int n) {
   cilk_for(int i = 0; i < n; i++) {
     for(int j = 0; j < n; j++) {
+      cilk::reducer_opadd<int> totalNeighbors; 
+      int index = i*n + j; 
+      int neighbors = 0; 
       int dx1 = (i - 1 + n) % n * n; 
       int dx2 = (i + 1 + n) % n * n; 
       int dy1 = (j - 1 + n) % n; 
@@ -129,7 +135,8 @@ void updateLifeReducer(int *a, unsigned int n) {
       int sw = dx2 + dy1; 
       int s = dx2 + j; 
       int se = dx2 + dy2; 
-      cilk::reducer_opadd<int> totalNeighbors; 
+      
+      std::cout << "Here" << std::endl;
       if(a[nw] == 1) totalNeighbors++; 
       if(a[n] == 1) totalNeighbors++; 
       if(a[ne] == 1) totalNeighbors++; 
@@ -138,8 +145,9 @@ void updateLifeReducer(int *a, unsigned int n) {
       if(a[sw] == 1) totalNeighbors++; 
       if(a[s] == 1) totalNeighbors++; 
       if(a[se] == 1) totalNeighbors++; 
-      int neighbors = totalNeighbors.get_value(); 
-      int index = i*n + j; 
+      
+      neighbors = totalNeighbors.get_value(); 
+      
       
       if(a[index] == 1) {
 	if(neighbors == 2 || neighbors == 3)
@@ -182,20 +190,29 @@ void updateLife(int *a, unsigned int n, unsigned int it) {
 }
 */
 void life(int *a, unsigned int n, unsigned int iter, int *livecount) {
-  std::ofstream results; 
-  results.open("results"); 
+
+  int counter = 0; 
+  int div = iter/10; 
+  //std::ofstream results; 
+  //results.open("results"); 
   
   for(int it = 0; it < iter; it++) {
     updateLifeReducer(a,n); 
-    
+    for(int i = 0; i < n*n; i++) {
+      if(a[i] % 2 == 0)
+	a[i] = 1; 
+      else
+	a[i] = 0; 
+    }
 #if DEBUG == 1
-    if((it + 1) % (iter/10) == 0) {
-      livecount[it/(iter/10)] = countlive(a,n);
+    if((it + 1) % div == 0) {
+      livecount[counter] = countlive(a,n);
+      counter++;
       //      printLiveCount(livecount, 10); 
     }
 #endif    
   }
-  for(int i = 0; i < n; i++) 
-    results << livecount[i] << " "; 
+  //  for(int i = 0; i < 10; i++) 
+  // results << livecount[i] << " "; 
   
 }
