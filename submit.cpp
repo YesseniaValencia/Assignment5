@@ -30,20 +30,20 @@ void printLivecount(int *livecount) {
 }
 void genlife(int *a, unsigned int n)
 {
-  std::ofstream resultFile;
-  resultFile.open("generatedInput");
+  //std::ofstream resultFile;
+  //resultFile.open("generatedInput");
   int currentIndex = 0;
   srand(time(NULL));
   for(int i = 0; i < n; i++) {
     for(int j = 0; j < n; j++) {
       a[currentIndex] = rand() % 2;  
-      resultFile << a[currentIndex] << " "; 
+      //resultFile << a[currentIndex] << " "; 
       currentIndex++; 
     }
-    resultFile << "\n";
+    //resultFile << "\n";
   }
-  printMatrix(a,n); 
-  resultFile.close(); 
+  //printMatrix(a,n); 
+  //resultFile.close(); 
 }
 
 void readlife(int *a, unsigned int n, char *filename) {
@@ -54,7 +54,7 @@ void readlife(int *a, unsigned int n, char *filename) {
     exit(0); 
   }
   int currentIndex = 0;
-  for(int i = 0; i < n	; i++) {
+  cilk_for(int i = 0; i < n	; i++) {
     for(int j = 0; j < n; j++) {
       int result = fscanf(fp, "%d", &a[currentIndex] );
       currentIndex++; 

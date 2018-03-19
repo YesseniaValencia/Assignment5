@@ -61,9 +61,12 @@ int main(int argc, char **argv)
   for(int i = 0; i < 10; i++)
     livecount[i] = 0;
 #endif
-		
+  //int start = example_get_time();
+  //std::cout << "n = " << n << std::endl; 
   life(a,n,iter,livecount);
-
+  int end = example_get_time(); 
+  //std::cout << "Time: " << end << std::endl; 
+  
   // Print the livecount array
 	#if DEBUG == 1
   

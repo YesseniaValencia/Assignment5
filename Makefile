@@ -9,4 +9,4 @@ life: life.cpp submit.cpp
 validate: validate.cpp
 	g++ -o validate validate.cpp	
 clean: 
-	rm life validate
+	rm life validate life_debug generatedInput
